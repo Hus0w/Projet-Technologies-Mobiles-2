@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: tm2_backend
+  datasource:
+    url: jdbc:mariadb://localhost:3396/tm2_backend
+    username: root
+    password: rootroot
+    driver-class-name: org.mariadb.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+jwt:
+  secret: fjkdfngdbjzebnhubvshubsgdvgbjhn435345fsdnbvxhcbghxcbvxcvxfjkdfngdbjzebnhubvshubsgdvgbjhn435345fsdnbvxhcbghxcbvxcvx
+  expirationTokenMs: 3600000
+  expirationRefreshTokenMs: 604800000
+server:
+  port: 8081

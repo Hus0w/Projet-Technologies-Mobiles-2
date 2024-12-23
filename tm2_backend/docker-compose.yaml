@@ -1,0 +1,17 @@
+services:
+  db:
+    image: mariadb
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD: rootroot
+      MARIADB_DATABASE: tm2_backend
+    volumes:
+      - ./data/mariadb/mysql:/var/lib/mysql:rw
+    ports:
+      - 3396:3306
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
