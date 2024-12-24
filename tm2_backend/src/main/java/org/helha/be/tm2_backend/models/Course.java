@@ -20,6 +20,8 @@ public class Course {
 
     private String name;
 
+    /*
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL)
     private List<StudentCourse> studentCourses;
+    */
 }

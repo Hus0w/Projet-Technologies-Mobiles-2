@@ -14,13 +14,17 @@ public class StudentCourse {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
+    private String courseName;
+    private String courseGrade;
+
     @ManyToOne
     @JoinColumn(name = "student_id")
+    @JsonBackReference
     private Student student;
 
+    /*
     @ManyToOne
     @JoinColumn(name = "course_id")
     private Course course;
-
-    private double points;
+    */
 }
