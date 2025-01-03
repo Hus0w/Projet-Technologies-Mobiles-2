@@ -4,6 +4,7 @@ import 'pages/course_management_page.dart';
 import 'pages/grade_management_page.dart';
 import 'pages/course_statistics_page.dart';
 import 'pages/student_statistics_page.dart';
+import 'splash_screen.dart';
 
 void main() {
   runApp(MyApp());
@@ -42,7 +43,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: MainMenu(),
+      home: SplashScreen(), // Définit le SplashScreen comme première page
     );
   }
 }
