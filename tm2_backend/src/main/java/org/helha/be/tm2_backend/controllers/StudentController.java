@@ -1,8 +1,10 @@
 package org.helha.be.tm2_backend.controllers;
 
 import org.helha.be.tm2_backend.models.Student;
+import org.helha.be.tm2_backend.services.CourseServiceDB;
 import org.helha.be.tm2_backend.services.StudentServiceDB;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,6 +16,9 @@ public class StudentController {
 
     @Autowired
     StudentServiceDB studentServiceDB;
+
+    @Autowired
+    CourseServiceDB courseServiceDB;
 
     @GetMapping
     public List<Student> getStudents() {
@@ -38,5 +43,11 @@ public class StudentController {
     @DeleteMapping(path="/{id}")
     public void deleteStudent(@PathVariable int id) {
         studentServiceDB.deleteStudent(id);
+    }
+
+    @GetMapping("/{id}/average")
+    public ResponseEntity<Double> getStudentAverage(@PathVariable int id) {
+        double average = courseServiceDB.getStudentAverageGrade(id);
+        return ResponseEntity.ok(average);
     }
 }

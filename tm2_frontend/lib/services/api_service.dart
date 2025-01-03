@@ -10,7 +10,7 @@ class ApiService {
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      throw Exception("Failed to load students");
+      throw Exception("Échec du chargement des étudiants");
     }
   }
 
@@ -21,7 +21,7 @@ class ApiService {
       body: jsonEncode(student),
     );
     if (response.statusCode != 200) {
-      throw Exception("Failed to add student");
+      throw Exception("Échec de l'ajout de l'étudiant");
     }
   }
 
@@ -32,14 +32,14 @@ class ApiService {
       body: jsonEncode(student),
     );
     if (response.statusCode != 200) {
-      throw Exception("Failed to update student");
+      throw Exception("Échec de la mise à jour de l'étudiant");
     }
   }
 
   Future<void> deleteStudent(int id) async {
     final response = await http.delete(Uri.parse("$apiUrl/students/$id"));
     if (response.statusCode != 200) {
-      throw Exception("Failed to delete student");
+      throw Exception("Échec de la suppression de l'étudiant");
     }
   }
 
@@ -49,7 +49,7 @@ class ApiService {
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      throw Exception("Failed to load courses");
+      throw Exception("Échec du chargement des cours");
     }
   }
 
@@ -60,7 +60,7 @@ class ApiService {
       body: jsonEncode(course),
     );
     if (response.statusCode != 200) {
-      throw Exception("Failed to add course");
+      throw Exception("Échec de l'ajout du cours");
     }
   }
 
@@ -68,17 +68,17 @@ class ApiService {
     final response = await http.put(
       Uri.parse("$apiUrl/courses/$id"),
       headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"name": newName}), // Spécifier uniquement le champ "name"
+      body: jsonEncode({"name": newName}),
     );
     if (response.statusCode != 200) {
-      throw Exception("Failed to update course");
+      throw Exception("Échec de la mise à jour du cours");
     }
   }
 
   Future<void> deleteCourse(int id) async {
     final response = await http.delete(Uri.parse("$apiUrl/courses/$id"));
     if (response.statusCode != 200) {
-      throw Exception("Failed to delete course");
+      throw Exception("Échec de la suppression du cours");
     }
   }
 
@@ -88,7 +88,7 @@ class ApiService {
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
-      throw Exception('Failed to load course grades');
+      throw Exception('Échec du chargement des notes du cours');
     }
   }
 
@@ -99,7 +99,7 @@ class ApiService {
       body: jsonEncode({"studentId": studentId, "note": note}),
     );
     if (response.statusCode != 200) {
-      throw Exception("Failed to update grade");
+      throw Exception("Échec de la mise à jour de la note");
     }
   }
 
@@ -110,7 +110,7 @@ class ApiService {
       body: jsonEncode({"studentId": studentId}),
     );
     if (response.statusCode != 200) {
-      throw Exception("Failed to delete grade");
+      throw Exception("Échec de la suppression de la note");
     }
   }
 
@@ -133,6 +133,25 @@ class ApiService {
 
     if (response.statusCode != 200 && response.statusCode != 204) {
       throw Exception('Erreur lors de l\'ajout de la note');
+    }
+  }
+
+  Future<Map<String, dynamic>> getCourseStatistics(int courseId) async {
+    final response =
+    await http.get(Uri.parse("$apiUrl/courses/$courseId/statistics"));
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception("Échec du chargement des statistiques du cours");
+    }
+  }
+
+  Future<double> getStudentAverage(int studentId) async {
+    final response = await http.get(Uri.parse("$apiUrl/students/$studentId/average"));
+    if (response.statusCode == 200) {
+      return double.parse(response.body);
+    } else {
+      throw Exception("Échec du chargement de la moyenne de l'étudiant");
     }
   }
 }

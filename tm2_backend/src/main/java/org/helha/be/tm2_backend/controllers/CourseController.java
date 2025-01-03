@@ -3,6 +3,7 @@ package org.helha.be.tm2_backend.controllers;
 import org.helha.be.tm2_backend.models.Course;
 import org.helha.be.tm2_backend.services.CourseServiceDB;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -58,17 +59,29 @@ public class CourseController {
         courseServiceDB.deleteCourse(id);
     }
 
-    @PostMapping("/{courseId}/grades")
-    public void addGrade(@PathVariable int courseId, @RequestBody Map<String, Object> payload) {
+    @PostMapping("/{id}/grades")
+    public void addGrade(@PathVariable int id, @RequestBody Map<String, Object> payload) {
         int studentId = Integer.parseInt(payload.get("studentId").toString());
         Double note = Double.valueOf(payload.get("note").toString());
 
-        courseServiceDB.addGrade(courseId, studentId, note);
+        courseServiceDB.addGrade(id, studentId, note);
     }
 
-    @DeleteMapping("/{courseId}/grades")
-    public void removeGrade(@PathVariable int courseId, @RequestBody Map<String, Object> payload) {
+    @DeleteMapping("/{id}/grades")
+    public void removeGrade(@PathVariable int id, @RequestBody Map<String, Object> payload) {
         int studentId = Integer.parseInt(payload.get("studentId").toString());
-        courseServiceDB.removeGrade(courseId, studentId);
+        courseServiceDB.removeGrade(id, studentId);
+    }
+
+    @GetMapping("/{id}/statistics")
+    public ResponseEntity<?> getCourseStatistics(@PathVariable int id) {
+        Map<String, Object> statistics = courseServiceDB.getCourseStatistics(id);
+        return ResponseEntity.ok(statistics);
+    }
+
+    @GetMapping("/statistics")
+    public ResponseEntity<?> getAllCoursesStatistics() {
+        List<Map<String, Object>> statistics = courseServiceDB.getAllCoursesStatistics();
+        return ResponseEntity.ok(statistics);
     }
 }

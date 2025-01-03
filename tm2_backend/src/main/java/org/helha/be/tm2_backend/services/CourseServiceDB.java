@@ -7,9 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -90,4 +88,52 @@ public class CourseServiceDB implements ICourseService {
         course.getGrades().remove(studentId);
         courseRepository.save(course);
     }
+
+    public Map<String, Object> getCourseStatistics(int courseId) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new RuntimeException("Cours non trouvé"));
+
+        List<Double> grades = new ArrayList<>(course.getGrades().values());
+        double average = grades.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
+        double minGrade = grades.stream().mapToDouble(Double::doubleValue).min().orElse(0.0);
+        double maxGrade = grades.stream().mapToDouble(Double::doubleValue).max().orElse(0.0);
+
+        return Map.of(
+                "courseName", course.getName(),
+                "averageGrade", average,
+                "minGrade", minGrade,
+                "maxGrade", maxGrade
+        );
+    }
+
+
+    public List<Map<String, Object>> getAllCoursesStatistics() {
+        return courseRepository.findAll().stream().map(course -> {
+            List<Double> grades = new ArrayList<>(course.getGrades().values());
+            double average = grades.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
+
+            Map<String, Object> courseStats = new HashMap<>();
+            courseStats.put("courseId", course.getId());
+            courseStats.put("courseName", course.getName());
+            courseStats.put("averageGrade", average);
+            courseStats.put("studentCount", course.getGrades().size());
+
+            return courseStats;
+        }).collect(Collectors.toList());
+    }
+
+    public double getStudentAverageGrade(int studentId) {
+        // Obtenir tous les cours
+        List<Course> courses = courseRepository.findAll();
+
+        // Récupérer toutes les notes de cet étudiant dans tous les cours
+        List<Double> grades = courses.stream()
+                .map(course -> course.getGrades().get(studentId)) // Récupérer la note de l'élève pour chaque cours
+                .filter(Objects::nonNull) // Supprimer les null si l'élève n'a pas de note dans certains cours
+                .collect(Collectors.toList());
+
+        // Calculer la moyenne
+        return grades.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
+    }
+
 }
