@@ -6,31 +6,55 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
-@RequestMapping(path="/courses")
+@RequestMapping("/courses")
 public class CourseController {
 
     @Autowired
-    CourseServiceDB courseServiceDB;
+    private CourseServiceDB courseServiceDB;
+
+    /*
+    @GetMapping
+    public List<Course> getAllCourses() {
+        return courseServiceDB.getCourses();
+    }
+    */
 
     @GetMapping
-    public List<Course> getCourses() {
-        return courseServiceDB.getCourses();
+    public List<Map<String, Object>> getAllCourses() {
+        return courseServiceDB.getCoursesWithStudents();
+    }
+
+    @GetMapping("/{id}")
+    public Course getCourseById(@PathVariable int id) {
+        return courseServiceDB.getCourseById(id)
+                .orElseThrow(() -> new RuntimeException("Cours non trouvé"));
     }
 
     @PostMapping
-    public Course addCourse(@RequestBody Course course) {
-        return courseServiceDB.addCourse(course);
+    public Course createOrUpdateCourse(@RequestBody Course course) {
+        System.out.println("Cours reçu : " + course);
+        return courseServiceDB.addOrUpdateCourse(course);
     }
 
-    @PutMapping(path="/{id}")
-    public Course updateCourse(@RequestBody Course course, @PathVariable int id) {
-        return courseServiceDB.updateCourse(course, id);
-    }
-
-    @DeleteMapping(path="/{id}")
+    @DeleteMapping("/{id}")
     public void deleteCourse(@PathVariable int id) {
         courseServiceDB.deleteCourse(id);
+    }
+
+    @PostMapping("/{courseId}/grades")
+    public void addGrade(@PathVariable int courseId, @RequestBody Map<String, Object> payload) {
+        int studentId = Integer.parseInt(payload.get("studentId").toString());
+        Double note = Double.valueOf(payload.get("note").toString());
+
+        courseServiceDB.addGrade(courseId, studentId, note);
+    }
+
+    @DeleteMapping("/{courseId}/grades")
+    public void removeGrade(@PathVariable int courseId, @RequestBody Map<String, Object> payload) {
+        int studentId = Integer.parseInt(payload.get("studentId").toString());
+        courseServiceDB.removeGrade(courseId, studentId);
     }
 }

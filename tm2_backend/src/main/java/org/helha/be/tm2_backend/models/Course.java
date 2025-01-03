@@ -1,27 +1,34 @@
 package org.helha.be.tm2_backend.models;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
-@Data
 @Entity
-@NoArgsConstructor
-@AllArgsConstructor
+@Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonPropertyOrder({"id", "name", "grades"})
 public class Course {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
-
     private String name;
 
-    /*
-    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL)
-    private List<StudentCourse> studentCourses;
-    */
+    @ElementCollection
+    @CollectionTable(name = "course_grades", joinColumns = @JoinColumn(name = "course_id"))
+    @MapKeyJoinColumn(name = "student_id")
+    @Column(name = "note")
+    private Map<Integer, Double> grades = new HashMap<>();
+
+    public Map<Integer, Double> getGrades() {
+        return grades;
+    }
+
+    public void setGrades(Map<Integer, Double> grades) {
+        this.grades = grades;
+    }
 }
