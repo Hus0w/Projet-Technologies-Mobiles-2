@@ -20,6 +20,8 @@ class _AddStudentPageState extends State<AddStudentPage> {
   List<Map<String, dynamic>> filteredStudents = [];
   Map<String, dynamic>? selectedStudent;
 
+  String gradeErrorMessage = ""; // Pour gérer les messages d'erreur
+
   @override
   void initState() {
     super.initState();
@@ -28,7 +30,6 @@ class _AddStudentPageState extends State<AddStudentPage> {
 
   Future<void> fetchStudents() async {
     try {
-      // Assurez-vous que les étudiants sont explicitement convertis en List<Map<String, dynamic>>
       final List<dynamic> students = await apiService.getStudents();
       setState(() {
         allStudents = students
@@ -44,7 +45,6 @@ class _AddStudentPageState extends State<AddStudentPage> {
     }
   }
 
-
   void filterStudents(String query) {
     setState(() {
       filteredStudents = allStudents
@@ -56,10 +56,21 @@ class _AddStudentPageState extends State<AddStudentPage> {
   }
 
   Future<void> addStudent() async {
-    if (selectedStudent == null || gradeController.text.isEmpty) {
+    final String gradeText = gradeController.text;
+
+    // Validation des champs
+    if (selectedStudent == null || gradeText.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Veuillez sélectionner un étudiant et entrer une note')),
       );
+      return;
+    }
+
+    final double? grade = double.tryParse(gradeText);
+    if (grade == null || grade < 0 || grade > 20) {
+      setState(() {
+        gradeErrorMessage = "La note doit être comprise entre 0 et 20.";
+      });
       return;
     }
 
@@ -67,11 +78,11 @@ class _AddStudentPageState extends State<AddStudentPage> {
       await apiService.addGrade(
         widget.courseId,
         selectedStudent!['id'],
-        double.parse(gradeController.text),
+        grade,
       );
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Étudiant ajouté avec succès')));
-      Navigator.pop(context, true); // Retourner à la page précédente avec un succès
+      Navigator.pop(context, true); // Retourner à la page précédente avec succès
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erreur lors de l\'ajout de l\'étudiant')),
@@ -84,6 +95,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Ajouter un étudiant'),
+        backgroundColor: Theme.of(context).colorScheme.primary,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -95,43 +107,86 @@ class _AddStudentPageState extends State<AddStudentPage> {
               onChanged: filterStudents,
               decoration: InputDecoration(
                 labelText: 'Rechercher un étudiant',
-                prefixIcon: Icon(Icons.search),
+                prefixIcon: Icon(Icons.search, color: Theme.of(context).colorScheme.primary),
                 border: OutlineInputBorder(),
               ),
             ),
             SizedBox(height: 16),
             Expanded(
-              child: ListView.builder(
+              child: filteredStudents.isEmpty
+                  ? Center(
+                child: Text(
+                  "Aucun étudiant trouvé.",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.secondary,
+                  ),
+                ),
+              )
+                  : ListView.builder(
                 itemCount: filteredStudents.length,
                 itemBuilder: (context, index) {
                   final student = filteredStudents[index];
-                  return ListTile(
-                    title: Text('${student['name']} ${student['lastname']}'),
-                    subtitle: Text('Matricule : ${student['matricule']}'),
-                    trailing: selectedStudent != null && selectedStudent!['id'] == student['id']
-                        ? Icon(Icons.check, color: Colors.green)
-                        : null,
-                    onTap: () {
-                      setState(() {
-                        selectedStudent = student;
-                      });
-                    },
+                  return Card(
+                    margin: EdgeInsets.symmetric(vertical: 8),
+                    child: ListTile(
+                      title: Text(
+                        '${student['name']} ${student['lastname']}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      subtitle: Text(
+                          'Matricule : ${student['matricule']}',
+                          style: TextStyle(
+                              color:
+                              Theme.of(context).colorScheme.secondary)),
+                      trailing: selectedStudent != null &&
+                          selectedStudent!['id'] == student['id']
+                          ? Icon(Icons.check, color: Colors.green)
+                          : null,
+                      onTap: () {
+                        setState(() {
+                          selectedStudent = student;
+                        });
+                      },
+                    ),
                   );
                 },
               ),
             ),
+            SizedBox(height: 16),
             TextField(
               controller: gradeController,
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
                 labelText: 'Note',
                 border: OutlineInputBorder(),
+                errorText: gradeErrorMessage.isNotEmpty ? gradeErrorMessage : null,
               ),
+              onChanged: (_) {
+                setState(() {
+                  gradeErrorMessage = ""; // Efface le message d'erreur lors de la saisie
+                });
+              },
             ),
             SizedBox(height: 16),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+              ),
               onPressed: addStudent,
-              child: Text('Ajouter l\'étudiant'),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.person_add),
+                  SizedBox(width: 8),
+                  Text('Ajouter l\'étudiant'),
+                ],
+              ),
             ),
           ],
         ),

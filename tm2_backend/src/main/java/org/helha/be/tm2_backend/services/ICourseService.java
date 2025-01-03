@@ -10,7 +10,7 @@ public interface ICourseService {
     public List<Course> getCourses();
     public Optional<Course> getCourseById(int id);
     public List<Map<String, Object>> getCoursesWithStudents();
-    public Course addOrUpdateCourse(Course course);
-    //public Course updateCourse(Course course, int id);
+    public Course addCourse(Course course);
+    public Course updateCourse(int id, String newName);
     public void deleteCourse(int id);
 }

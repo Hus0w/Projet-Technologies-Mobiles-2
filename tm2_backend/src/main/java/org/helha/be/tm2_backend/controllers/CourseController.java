@@ -36,8 +36,22 @@ public class CourseController {
     @PostMapping
     public Course createOrUpdateCourse(@RequestBody Course course) {
         System.out.println("Cours reçu : " + course);
-        return courseServiceDB.addOrUpdateCourse(course);
+        return courseServiceDB.addCourse(course);
     }
+
+    @PutMapping("/{id}")
+    public Course updateCours(@PathVariable int id, @RequestBody Map<String, String> payload) {
+        // Validation pour vérifier que le champ "name" est présent
+        if (!payload.containsKey("name")) {
+            throw new RuntimeException("Le champ 'name' est obligatoire.");
+        }
+
+        String newName = payload.get("name");
+
+        // Appel au service pour mettre à jour le nom
+        return courseServiceDB.updateCourse(id, newName);
+    }
+
 
     @DeleteMapping("/{id}")
     public void deleteCourse(@PathVariable int id) {

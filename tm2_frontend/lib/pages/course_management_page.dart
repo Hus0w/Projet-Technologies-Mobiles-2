@@ -36,7 +36,11 @@ class _CourseManagementPageState extends State<CourseManagementPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(id == null ? "Ajouter un cours" : "Modifier le cours"),
+        backgroundColor: Colors.grey[100],
+        title: Text(
+          id == null ? "Ajouter un cours" : "Modifier le cours",
+          style: TextStyle(color: Theme.of(context).colorScheme.primary),
+        ),
         content: Form(
           key: _formKey,
           child: Column(
@@ -64,19 +68,21 @@ class _CourseManagementPageState extends State<CourseManagementPage> {
             child: Text("Annuler"),
           ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.secondary,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () async {
               if (!_formKey.currentState!.validate()) {
                 return;
               }
-              final course = {
-                "name": _nameController.text,
-              };
+              final newName = _nameController.text;
 
               try {
                 if (id == null) {
-                  await apiService.addCourse(course);
+                  await apiService.addCourse({"name": newName});
                 } else {
-                  await apiService.updateCourse(id, course);
+                  await apiService.updateCourse(id, newName);
                 }
                 Navigator.of(context).pop(); // Fermer le popup
                 fetchCourses(); // Rafraîchir la liste
@@ -98,7 +104,11 @@ class _CourseManagementPageState extends State<CourseManagementPage> {
     final confirmed = await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text("Confirmer la suppression"),
+        backgroundColor: Colors.grey[100],
+        title: Text(
+          "Confirmer la suppression",
+          style: TextStyle(color: Theme.of(context).colorScheme.primary),
+        ),
         content: Text("Voulez-vous vraiment supprimer ce cours ?"),
         actions: [
           TextButton(
@@ -107,7 +117,10 @@ class _CourseManagementPageState extends State<CourseManagementPage> {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text("Supprimer"),
+            child: Text(
+              "Supprimer",
+              style: TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
@@ -128,35 +141,64 @@ class _CourseManagementPageState extends State<CourseManagementPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text("Gérer les cours"),
+        backgroundColor: Theme.of(context).colorScheme.primary,
       ),
       body: Column(
         children: [
-          ElevatedButton(
-            onPressed: () => openCourseForm(),
-            child: Text("Ajouter un cours"),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(vertical: 15, horizontal: 30),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              onPressed: () => openCourseForm(),
+              child: Text("Ajouter un cours"),
+            ),
           ),
           Expanded(
-            child: ListView.builder(
+            child: courses.isEmpty
+                ? Center(
+              child: Text(
+                "Aucun cours n'est disponible.",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            )
+                : ListView.builder(
               itemCount: courses.length,
               itemBuilder: (context, index) {
                 final course = courses[index];
-                return ListTile(
-                  title: Text(course['name']),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: Icon(Icons.edit),
-                        onPressed: () => openCourseForm(
-                          id: course['id'],
-                          name: course['name'],
+                return Card(
+                  margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                  child: ListTile(
+                    title: Text(
+                      course['name'],
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.edit, color: Colors.blue),
+                          onPressed: () => openCourseForm(
+                            id: course['id'],
+                            name: course['name'],
+                          ),
                         ),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.delete),
-                        onPressed: () => handleDelete(course['id']),
-                      ),
-                    ],
+                        IconButton(
+                          icon: Icon(Icons.delete, color: Colors.red),
+                          onPressed: () => handleDelete(course['id']),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },

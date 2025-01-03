@@ -55,8 +55,20 @@ public class CourseServiceDB implements ICourseService {
         }).collect(Collectors.toList());
     }
 
-    public Course addOrUpdateCourse(Course course) {
+    public Course addCourse(Course course) {
         return courseRepository.save(course);
+    }
+
+    public Course updateCourse(int id, String newName) {
+        // Recherche du cours par son ID
+        Course existingCourse = courseRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Cours non trouvé avec l'ID : " + id));
+
+        // Mise à jour du nom uniquement
+        existingCourse.setName(newName);
+
+        // Sauvegarde des modifications
+        return courseRepository.save(existingCourse);
     }
 
     public void deleteCourse(int id) {

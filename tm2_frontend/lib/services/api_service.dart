@@ -64,11 +64,11 @@ class ApiService {
     }
   }
 
-  Future<void> updateCourse(int id, Map<String, dynamic> course) async {
+  Future<void> updateCourse(int id, String newName) async {
     final response = await http.put(
       Uri.parse("$apiUrl/courses/$id"),
       headers: {"Content-Type": "application/json"},
-      body: jsonEncode(course),
+      body: jsonEncode({"name": newName}), // Spécifier uniquement le champ "name"
     );
     if (response.statusCode != 200) {
       throw Exception("Failed to update course");

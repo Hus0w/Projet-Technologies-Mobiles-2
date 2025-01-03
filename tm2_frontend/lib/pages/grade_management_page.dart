@@ -29,80 +29,9 @@ class _GradeManagementPageState extends State<GradeManagementPage> {
     }
   }
 
-  void openEditGradeForm(
-      int courseId, Map<String, dynamic> student, double currentGrade) {
-    final _gradeController = TextEditingController(text: currentGrade.toString());
-    String errorMessage = "";
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text("Modifier la note"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              "Étudiant : ${student['name']} ${student['lastname']} (${student['matricule']})",
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            TextField(
-              controller: _gradeController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(labelText: "Note"),
-            ),
-            if (errorMessage.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: Text(
-                  errorMessage,
-                  style: TextStyle(color: Colors.red),
-                ),
-              ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text("Annuler"),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final newGradeText = _gradeController.text;
-              if (newGradeText.isEmpty) {
-                setState(() {
-                  errorMessage = "Le champ ne doit pas être vide.";
-                });
-                return;
-              }
-
-              final newGrade = double.tryParse(newGradeText);
-              if (newGrade == null) {
-                setState(() {
-                  errorMessage = "Entrez une note valide.";
-                });
-                return;
-              }
-
-              try {
-                await apiService.updateGrade(courseId, student['id'], newGrade);
-                Navigator.of(context).pop();
-                fetchCourseGrades(courseId); // Rafraîchir les données
-              } catch (e) {
-                print("Error updating grade: $e");
-              }
-            },
-            child: Text("Enregistrer"),
-          ),
-        ],
-      ),
-    );
-  }
-
   Future<void> fetchCourseGrades(int courseId) async {
     try {
       final data = await apiService.getCourseGrades(courseId);
-      print("Données reçues pour le cours $courseId : $data");
-
       setState(() {
         selectedCourse = {
           'id': data['id'],
@@ -115,11 +44,109 @@ class _GradeManagementPageState extends State<GradeManagementPage> {
     }
   }
 
+  Future<void> deleteGrade(int courseId, int studentId) async {
+    try {
+      await apiService.deleteGrade(courseId, studentId);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Note supprimée avec succès.")),
+      );
+      fetchCourseGrades(courseId); // Rafraîchir la liste des notes
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Erreur lors de la suppression de la note.")),
+      );
+      print("Error deleting grade: $e");
+    }
+  }
+
+  void openEditGradeForm(
+      int courseId, Map<String, dynamic> student, double currentGrade) {
+    final _gradeController = TextEditingController(text: currentGrade.toString());
+    ValueNotifier<String> errorMessageNotifier = ValueNotifier("");
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.grey[100],
+        title: Text(
+          "Modifier la note",
+          style: TextStyle(color: Theme.of(context).colorScheme.primary),
+        ),
+        content: ValueListenableBuilder<String>(
+          valueListenable: errorMessageNotifier,
+          builder: (context, errorMessage, child) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "Étudiant : ${student['name']} ${student['lastname']} (${student['matricule']})",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.secondary,
+                  ),
+                ),
+                TextField(
+                  controller: _gradeController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: "Note",
+                    errorText: errorMessage.isNotEmpty ? errorMessage : null,
+                  ),
+                  onChanged: (_) {
+                    errorMessageNotifier.value = ""; // Réinitialise l'erreur
+                  },
+                ),
+              ],
+            );
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text("Annuler"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.secondary,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              final newGradeText = _gradeController.text;
+              if (newGradeText.isEmpty) {
+                errorMessageNotifier.value = "Le champ ne doit pas être vide.";
+                return;
+              }
+
+              final newGrade = double.tryParse(newGradeText);
+              if (newGrade == null || newGrade < 0 || newGrade > 20) {
+                errorMessageNotifier.value = "La note doit être comprise entre 0 et 20.";
+                return;
+              }
+
+              try {
+                await apiService.updateGrade(courseId, student['id'], newGrade);
+                Navigator.of(context).pop();
+                fetchCourseGrades(courseId); // Rafraîchir les données
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Erreur lors de la modification de la note')),
+                );
+                print("Error updating grade: $e");
+              }
+            },
+            child: Text("Enregistrer"),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text("Gestion des notes"),
+        backgroundColor: Theme.of(context).colorScheme.primary,
         leading: selectedCourse == null
             ? null
             : IconButton(
@@ -132,13 +159,31 @@ class _GradeManagementPageState extends State<GradeManagementPage> {
         ),
       ),
       body: selectedCourse == null
-          ? ListView.builder(
+          ? courses.isEmpty
+          ? Center(
+        child: Text(
+          "Aucune note n'est disponible.",
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        ),
+      )
+          : ListView.builder(
         itemCount: courses.length,
         itemBuilder: (context, index) {
           final course = courses[index];
-          return ListTile(
-            title: Text(course['name']),
-            onTap: () => fetchCourseGrades(course['id']),
+          return Card(
+            margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            child: ListTile(
+              title: Text(
+                course['name'],
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              trailing: Icon(Icons.arrow_forward),
+              onTap: () => fetchCourseGrades(course['id']),
+            ),
           );
         },
       )
@@ -148,20 +193,40 @@ class _GradeManagementPageState extends State<GradeManagementPage> {
             padding: const EdgeInsets.all(16.0),
             child: Text(
               "Cours : ${selectedCourse!['name']}",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.primary,
+              ),
             ),
           ),
           Expanded(
-            child: ListView.builder(
+            child: selectedCourse!['grades'].isEmpty
+                ? Center(
+              child: Text(
+                "Aucune note n'est disponible pour ce cours.",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.secondary,
+                ),
+              ),
+            )
+                : ListView.builder(
               itemCount: selectedCourse!['grades'].keys.length,
               itemBuilder: (context, index) {
-                final studentId = selectedCourse!['grades'].keys.elementAt(index);
-                final grade = selectedCourse!['grades'][studentId.toString()];
+                final studentId = selectedCourse!['grades']
+                    .keys
+                    .elementAt(index);
+                final grade =
+                selectedCourse!['grades'][studentId.toString()];
 
                 return FutureBuilder<Map<String, dynamic>>(
-                  future: apiService.getStudentById(int.parse(studentId)),
+                  future: apiService
+                      .getStudentById(int.parse(studentId)),
                   builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
+                    if (snapshot.connectionState ==
+                        ConnectionState.waiting) {
                       return ListTile(
                         title: Text("Chargement..."),
                       );
@@ -171,16 +236,35 @@ class _GradeManagementPageState extends State<GradeManagementPage> {
                       );
                     } else {
                       final student = snapshot.data!;
-                      return ListTile(
-                        title: Text(
-                            "${student['name']} ${student['lastname']} (${student['matricule']})"),
-                        subtitle: Text("Note: ${grade ?? 'Pas de note'}"),
-                        trailing: IconButton(
-                          icon: Icon(Icons.edit),
-                          onPressed: () => openEditGradeForm(
-                            selectedCourse!['id'],
-                            student,
-                            grade ?? 0.0,
+                      return Card(
+                        margin: EdgeInsets.symmetric(
+                            vertical: 8, horizontal: 16),
+                        child: ListTile(
+                          title: Text(
+                              "${student['name']} ${student['lastname']} (${student['matricule']})"),
+                          subtitle: Text(
+                              "Note: ${grade ?? 'Pas de note'}"),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: Icon(Icons.edit,
+                                    color: Colors.blue),
+                                onPressed: () => openEditGradeForm(
+                                  selectedCourse!['id'],
+                                  student,
+                                  grade ?? 0.0,
+                                ),
+                              ),
+                              IconButton(
+                                icon: Icon(Icons.delete,
+                                    color: Colors.red),
+                                onPressed: () => deleteGrade(
+                                  selectedCourse!['id'],
+                                  student['id'],
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       );
@@ -194,6 +278,7 @@ class _GradeManagementPageState extends State<GradeManagementPage> {
       ),
       floatingActionButton: selectedCourse != null
           ? FloatingActionButton(
+        backgroundColor: Theme.of(context).colorScheme.secondary,
         onPressed: () async {
           final success = await Navigator.push(
             context,

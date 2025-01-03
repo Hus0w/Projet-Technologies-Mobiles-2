@@ -38,7 +38,11 @@ class _StudentManagementPageState extends State<StudentManagementPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(id == null ? "Ajouter un étudiant" : "Modifier l'étudiant"),
+        backgroundColor: Colors.grey[100],
+        title: Text(
+          id == null ? "Ajouter un étudiant" : "Modifier l'étudiant",
+          style: TextStyle(color: Theme.of(context).colorScheme.primary),
+        ),
         content: Form(
           key: _formKey,
           child: Column(
@@ -49,11 +53,13 @@ class _StudentManagementPageState extends State<StudentManagementPage> {
                 decoration: InputDecoration(labelText: "Prénom"),
                 validator: (value) => value!.isEmpty ? "Obligatoire" : null,
               ),
+              SizedBox(height: 10),
               TextFormField(
                 controller: _lastnameController,
                 decoration: InputDecoration(labelText: "Nom"),
                 validator: (value) => value!.isEmpty ? "Obligatoire" : null,
               ),
+              SizedBox(height: 10),
               TextFormField(
                 controller: _matriculeController,
                 decoration: InputDecoration(labelText: "Matricule"),
@@ -76,6 +82,10 @@ class _StudentManagementPageState extends State<StudentManagementPage> {
             child: Text("Annuler"),
           ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.secondary,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () async {
               if (!_formKey.currentState!.validate()) {
                 return;
@@ -112,7 +122,11 @@ class _StudentManagementPageState extends State<StudentManagementPage> {
     final confirmed = await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text("Confirmer la suppression"),
+        backgroundColor: Colors.grey[100],
+        title: Text(
+          "Confirmer la suppression",
+          style: TextStyle(color: Theme.of(context).colorScheme.primary),
+        ),
         content: Text("Voulez-vous vraiment supprimer cet étudiant ?"),
         actions: [
           TextButton(
@@ -121,7 +135,10 @@ class _StudentManagementPageState extends State<StudentManagementPage> {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text("Supprimer"),
+            child: Text(
+              "Supprimer",
+              style: TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
@@ -142,38 +159,64 @@ class _StudentManagementPageState extends State<StudentManagementPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text("Gérer les étudiants"),
+        backgroundColor: Theme.of(context).colorScheme.primary,
       ),
       body: Column(
         children: [
-          ElevatedButton(
-            onPressed: () => openStudentForm(),
-            child: Text("Ajouter un étudiant"),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(vertical: 15, horizontal: 30),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              onPressed: () => openStudentForm(),
+              child: Text("Ajouter un étudiant"),
+            ),
           ),
           Expanded(
-            child: ListView.builder(
+            child: students.isEmpty
+                ? Center(
+              child: Text(
+                "Aucun étudiant n'est disponible.",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            )
+                : ListView.builder(
               itemCount: students.length,
               itemBuilder: (context, index) {
                 final student = students[index];
-                return ListTile(
-                  title: Text("${student['name']} ${student['lastname']}"),
-                  subtitle: Text("Matricule: ${student['matricule']}"),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: Icon(Icons.edit),
-                        onPressed: () => openStudentForm(
-                          id: student['id'],
-                          name: student['name'],
-                          lastname: student['lastname'],
-                          matricule: student['matricule'],
+                return Card(
+                  margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                  child: ListTile(
+                    title: Text("${student['name']} ${student['lastname']}"),
+                    subtitle: Text("Matricule: ${student['matricule']}"),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.edit, color: Colors.blue),
+                          onPressed: () => openStudentForm(
+                            id: student['id'],
+                            name: student['name'],
+                            lastname: student['lastname'],
+                            matricule: student['matricule'],
+                          ),
                         ),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.delete),
-                        onPressed: () => handleDelete(student['id']),
-                      ),
-                    ],
+                        IconButton(
+                          icon: Icon(Icons.delete, color: Colors.red),
+                          onPressed: () => handleDelete(student['id']),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },
